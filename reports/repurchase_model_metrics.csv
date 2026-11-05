@@ -1,0 +1,7 @@
+key,name,roc_auc,pr_auc,brier,log_loss,top_decile_lift,buyers_captured,revenue_captured,base_rate,mean_predicted,split
+rfm,RFM score (baseline),0.8072,0.6709,0.1651,0.5058,2.6837,0.4528,0.7539,0.3207,0.409,validation
+logit,Logistic regression,0.8254,0.7298,0.1519,0.4709,2.7593,0.4729,0.7616,0.3207,0.3571,validation
+gbm,Gradient boosting,0.8127,0.7222,0.1522,0.4704,2.8034,0.4767,0.7715,0.3207,0.3303,validation
+rfm,RFM score (baseline),0.7827,0.731,0.1885,0.5565,2.0823,0.3827,0.6993,0.4355,0.3885,test
+logit,Logistic regression,0.8015,0.7776,0.1864,0.5518,2.1521,0.3875,0.6974,0.4355,0.3496,test
+gbm,Gradient boosting,0.7975,0.7732,0.1925,0.5723,2.1303,0.3844,0.6907,0.4355,0.3299,test

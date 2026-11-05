@@ -1,0 +1,7 @@
+status,lines,amount,lines_without_customer,share,label,kept
+sale,1003329,19600960.179997984,226754,0.940000243589155,Product sales,True
+cancellation,17914,-716425.9700000016,328,0.016783292781984895,Cancellations (netted from revenue),True
+duplicate,34335,431716.8699999991,7856,0.032167821685243465,Exact duplicate lines,False
+non-product,5823,-71887.20200000005,2161,0.005455460191442338,"Postage, fees and manual adjustments",False
+invalid quantity or price,5961,0.0,5901,0.005584749819884558,Zero-price lines and stock write-offs,False
+price error,9,42886.69,7,8.431932289709951e-06,Price keying errors,False
