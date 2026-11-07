@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="360" height="360" viewBox="0 0 360 360">
+  <filter id="cloud" x="0" y="0" width="100%" height="100%">
+    <feTurbulence type="fractalNoise" baseFrequency="0.011" numOctaves="3" seed="11" stitchTiles="stitch"/>
+    <feColorMatrix values="0 0 0 0 0.42  0 0 0 0 0.34  0 0 0 0 0.29  0.16 0 0 0 -0.05"/>
+  </filter>
+  <filter id="grain" x="0" y="0" width="100%" height="100%">
+    <feTurbulence type="fractalNoise" baseFrequency="0.92" numOctaves="1" seed="4" stitchTiles="stitch"/>
+    <feColorMatrix values="0 0 0 0 0.38  0 0 0 0 0.31  0 0 0 0 0.27  0.2 0 0 0 -0.06"/>
+  </filter>
+  <rect width="360" height="360" filter="url(#cloud)"/>
+  <rect width="360" height="360" filter="url(#grain)"/>
+  <g fill="none" stroke="#7a6a5f" stroke-opacity="0.07" stroke-width="0.6" stroke-linecap="round">
+    <path d="M14 22l9 2.5M61 9l6-2.2M118 31l10 1M171 14l7 3.4M236 26l8-1.6M301 11l9 2M342 40l6 3"/>
+    <path d="M28 88l7-2.6M84 72l10 1.8M139 101l6 3M203 79l9-1M262 96l7 2.4M318 70l8-2.8"/>
+    <path d="M9 151l8 2M57 133l7-3M112 164l10-0.6M168 140l6 2.8M227 158l9 1.4M289 137l7-2.2M346 162l8 1"/>
+    <path d="M36 209l9-1.8M93 226l6 2.6M151 201l8 1.2M212 230l10-2M270 207l7 3M327 226l6-1.4"/>
+    <path d="M18 282l7 2.8M72 264l9-1.2M129 291l6-2.6M187 268l10 1.6M248 289l7 2M304 262l9-2.4"/>
+    <path d="M44 338l8-2M101 322l7 3M160 349l9 0.8M219 327l6-2.8M279 344l10 1.2M336 318l7 2.6"/>
+  </g>
+</svg>

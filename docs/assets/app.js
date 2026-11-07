@@ -90,6 +90,43 @@
     };
   }
 
+  /* Typographic apostrophes in every string the data puts on the page (segment names, product descriptions). */
+  function curly(o) {
+    if (typeof o === 'string') return o.replace(/'/g, '’');
+    if (Array.isArray(o)) return o.map(curly);
+    if (o && typeof o === 'object') { Object.keys(o).forEach((k) => { o[k] = curly(o[k]); }); }
+    return o;
+  }
+
+  /* Section tabs: mark the section in view, and keep its tab in sight when the strip scrolls sideways. */
+  function tabs() {
+    const nav = document.querySelector('.tabs');
+    if (!nav) return;
+    const strip = nav.querySelector('ul');
+    const links = Array.from(nav.querySelectorAll('a[href^="#"]'));
+    const sections = links.map((a) => { const h = document.getElementById(a.getAttribute('href').slice(1)); return h && h.closest('section'); });
+    const still = window.matchMedia('(prefers-reduced-motion: reduce)');
+    let queued = false;
+    let shown = -1;
+    const mark = () => {
+      queued = false;
+      const line = nav.getBoundingClientRect().bottom + window.innerHeight * 0.2;
+      let current = -1;
+      sections.forEach((sec, i) => { if (sec && sec.getBoundingClientRect().top <= line) current = i; });
+      const atEnd = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 2;
+      if (atEnd && current >= 0) current = sections.length - 1; // the last sections cannot scroll up to the line
+      links.forEach((a, i) => { if (i === current) a.setAttribute('aria-current', 'location'); else a.removeAttribute('aria-current'); });
+      if (current !== shown && current >= 0 && strip.scrollWidth > strip.clientWidth) {
+        const r = links[current].getBoundingClientRect();
+        const s = strip.getBoundingClientRect();
+        strip.scrollTo({ left: Math.max(0, strip.scrollLeft + r.left - s.left - (s.width - r.width) / 2), behavior: still.matches ? 'auto' : 'smooth' });
+      }
+      shown = current;
+    };
+    window.addEventListener('scroll', () => { if (!queued) { queued = true; requestAnimationFrame(mark); } }, { passive: true });
+    mark();
+  }
+
   /* ---------- Hero ---------- */
   function hero() {
     const k = D.kpis;
@@ -105,7 +142,7 @@
       tone: tone(k.customers.change, true), note: 'vs. ' + fmt.int(k.customers.year1) });
     Viz.tile('kpi-repeat', { label: 'Customers with 2+ orders in the year', value: fmt.pct(k.repeat_rate.year2, 1),
       delta: fmt.pp(k.repeat_rate.change, 1), tone: tone(k.repeat_rate.change, true), note: 'vs. ' + fmt.pct(k.repeat_rate.year1, 1) });
-    el('meta-size').textContent = fmt.int(D.meta.raw_rows) + ' invoice lines · ' + fmt.date(D.meta.first_invoice.slice(0, 10)) + ' – ' +
+    el('meta-size').textContent = fmt.int(D.meta.raw_rows) + ' invoice lines from ' + fmt.date(D.meta.first_invoice.slice(0, 10)) + ' to ' +
       fmt.date(D.meta.last_invoice.slice(0, 10));
   }
 
@@ -130,8 +167,9 @@
           data: [trace(true, 'Kept for analysis', t.series[0]), trace(false, 'Removed', t.series[1])],
           layout: {
             showlegend: true, barmode: 'overlay', margin: { l: 8, r: 70, t: 30, b: 8 },
-            xaxis: { type: 'log', showgrid: true, showline: false, range: [0, 6.75], tickvals: [1, 10, 100, 1e3, 1e4, 1e5, 1e6],
-              ticktext: ['1', '10', '100', '1k', '10k', '100k', '1M'] },
+            xaxis: { type: 'log', showgrid: true, showline: false, range: [0, 6.75],
+              tickvals: t.narrow ? [1, 100, 1e4, 1e6] : [1, 10, 100, 1e3, 1e4, 1e5, 1e6],
+              ticktext: t.narrow ? ['1', '100', '10k', '1M'] : ['1', '10', '100', '1k', '10k', '100k', '1M'] },
             yaxis: { autorange: 'reversed', showgrid: false, categoryorder: 'array', categoryarray: f.map((r) => r.label),
               tickfont: { color: t.text2, size: 12 } },
           },
@@ -149,7 +187,7 @@
       ['Duplicates would have inflated revenue', fmt.int(by.duplicate.lines) + ' exact duplicate lines worth ' + fmt.gbp(by.duplicate.amount) + ', ' +
         fmt.pct(by.duplicate.amount / by.sale.amount, 1) + ' of gross product sales.'],
       [fmt.int(err.lines) + ' price keying errors, ' + fmt.gbp(err.amount), 'Lines priced over ' + D.meta.price_error_factor +
-        "× the product's median price, such as a 60-piece hamper price charged for each of 60 hampers (£38,970, later reversed by a manual credit)."],
+        "× the product’s median price, such as a 60-piece hamper price charged for each of 60 hampers (£38,970, later reversed by a manual credit)."],
       ['A fifth of sales are guest checkouts', fmt.pct(by.sale.lines_without_customer / by.sale.lines, 1) +
         ' of sale lines have no customer ID. They count toward revenue and orders, not toward customer metrics.'],
     ]);
@@ -208,7 +246,7 @@
         }],
         layout: {
           margin: { l: 8, r: 8, t: 8, b: 8 },
-          xaxis: { showgrid: false, showline: false, tickvals: hours.filter((_, i) => i % 2 === 0), tickangle: 0 },
+          xaxis: { showgrid: false, showline: false, tickvals: hours.filter((_, i) => i % 2 === 0) },
           yaxis: { autorange: 'reversed', showgrid: false, tickfont: { color: t.text2, size: 12 } },
         },
       }),
@@ -235,7 +273,7 @@
         fmt.gbpCompact(nov.net_revenue, 2) + '. Wholesale buyers stock up well before December.'],
       ['Fewer, larger orders', 'Year-2 orders fell ' + fmt.pct(Math.abs(k.orders.change), 1) + ' but the average order rose ' +
         fmt.pct(k.aov.change, 1) + ' to ' + fmt.gbp(k.aov.year2) + ', so revenue still grew ' + fmt.pct(k.net_revenue.change, 1) + '.'],
-      ['Orders follow office hours', 'The busiest hour is ' + bestHour + ':00–' + (bestHour + 1) + ':00 and the busiest day ' + DAY_NAMES[bestDay] +
+      ['Orders follow office hours', 'The busiest hour is ' + bestHour + ':00 to ' + (bestHour + 1) + ':00 and the busiest day ' + DAY_NAMES[bestDay] +
         '. Only ' + fmt.pct(offHours / allOrders, 0) + ' of orders arrive before 08:00 or after 18:00.'],
     ]);
   }
@@ -255,7 +293,7 @@
         })),
         layout: {
           barmode: 'stack', barcornerradius: 4, showlegend: true, legend: { traceorder: 'normal' }, hovermode: 'x unified', margin: { l: 8, r: 14, t: 30, b: 8 },
-          xaxis: { tickvals: months, ticktext: months.map((m) => m.slice(0, 3)), tickangle: 0 },
+          xaxis: { tickvals: months, ticktext: months.map((m) => m.slice(0, 3)) },
           yaxis: { tickprefix: '£', tickformat: '~s' },
         },
       }),
@@ -269,7 +307,7 @@
       build: (t) => hbar(t, 'chart-countries', {
         labels: C.map((c) => country(c.country)), values: C.map((c) => c.revenue_share), text: C.map((c) => fmt.pct(c.revenue_share, 1)),
         hover: C.map((c) => '<b>' + country(c.country) + '</b><br>' + fmt.gbp(c.net_revenue) + ' (' + fmt.pct(c.revenue_share, 1) + ')<br>' +
-          fmt.int(c.orders) + ' orders · ' + fmt.int(c.customers) + ' customer accounts'),
+          fmt.int(c.orders) + ' orders, ' + fmt.int(c.customers) + ' customer accounts'),
         xaxis: { tickformat: '.0%', range: [0, 1.0] },
       }),
       table: () => ({ columns: ['Country', 'Net revenue', 'Share', 'Orders', 'Customer accounts'],
@@ -282,8 +320,8 @@
       build: (t) => hbar(t, 'chart-products', {
         labels: top.map((p) => short(nice(p.description), 28)), values: top.map((p) => p.net_revenue),
         text: top.map((p) => fmt.gbpCompact(p.net_revenue, 0)),
-        hover: top.map((p) => '<b>' + nice(p.description) + '</b> (' + p.stock_code + ')<br>' + fmt.gbp(p.net_revenue) + ' · ' +
-          fmt.int(p.net_units) + ' units<br>' + fmt.int(p.orders) + ' orders · ' + fmt.int(p.customers) + ' customer accounts'),
+        hover: top.map((p) => '<b>' + nice(p.description) + '</b> (' + p.stock_code + ')<br>' + fmt.gbp(p.net_revenue) + ', ' +
+          fmt.int(p.net_units) + ' units<br>' + fmt.int(p.orders) + ' orders, ' + fmt.int(p.customers) + ' customer accounts'),
         xaxis: { tickprefix: '£', tickformat: '~s' }, right: 50,
       }),
       table: () => ({ columns: ['Product', 'Code', 'Net revenue', 'Units', 'Orders', 'Customer accounts'],
@@ -326,7 +364,7 @@
       ['A long tail of products', fmt.int(par.products_for_80) + ' of ' + fmt.int(par.products) + ' products (' + fmt.pct(par.share_for_80, 0) +
         ') earn 80% of revenue. The best seller (' + nice(P.top[0].description) + ') earned ' + fmt.gbpCompact(P.top[0].net_revenue, 0) + '.'],
       ['Abroad, a few large accounts', 'The UK is ' + fmt.pct(uk.revenue_share, 0) + ' of revenue. ' +
-        (ie && nl ? "Ireland's " + fmt.pct(ie.revenue_share, 1) + ' came mostly from ' + ie.customers + " customer accounts, the Netherlands' " +
+        (ie && nl ? "Ireland’s " + fmt.pct(ie.revenue_share, 1) + ' came mostly from ' + ie.customers + " customer accounts, the Netherlands’ " +
           fmt.pct(nl.revenue_share, 1) + ' from ' + nl.customers + '.' : '')],
     ]);
   }
@@ -375,7 +413,7 @@
       state.view = v;
       el('cohort-title').textContent = v === 'retention' ? 'Cohort retention' : 'Cumulative revenue per new customer';
       el('cohort-sub').textContent = v === 'retention'
-        ? "Share of each month's new customers who ordered in each later month"
+        ? "Share of each month’s new customers who ordered in each later month"
         : "Net revenue per acquired customer up to each month, including the first";
       card.update();
     });
@@ -413,10 +451,10 @@
           xaxis: Object.assign({ title: { text: 'Months since first order (0 = the first month)' }, dtick: 2 }, Viz.crosshair(t)),
           yaxis: { tickprefix: '£', tickformat: ',.0f', rangemode: 'tozero' },
           annotations: [
-            { x: 0, y: vv(0), text: fmt.gbp(vv(0)) + ' in the first month', showarrow: true, arrowcolor: t.baseline, arrowwidth: 1, ax: 30, ay: 20, yanchor: 'top',
-              xanchor: 'left', font: { color: t.text2, size: 12 } },
-            { x: 11, y: vv(11), text: fmt.gbp(vv(11)) + ' over the first year', showarrow: true, arrowcolor: t.baseline, arrowwidth: 1, ax: -20, ay: -46,
-              xanchor: 'right', font: { color: t.text2, size: 12 } },
+            { x: 0, y: vv(0), text: fmt.gbp(vv(0)) + (t.narrow ? ' in the<br>first month' : ' in the first month'), showarrow: true, arrowcolor: t.baseline, arrowwidth: 1, ax: t.narrow ? 14 : 30, ay: t.narrow ? 6 : 20, yanchor: 'top',
+              xanchor: 'left', align: 'left', font: { color: t.text2, size: 12 } },
+            { x: 11, y: vv(11), text: fmt.gbp(vv(11)) + (t.narrow ? ' over<br>the first year' : ' over the first year'), showarrow: true, arrowcolor: t.baseline, arrowwidth: 1, ax: -20, ay: -46,
+              xanchor: 'right', align: 'right', font: { color: t.text2, size: 12 } },
           ],
         },
       }),
@@ -429,12 +467,12 @@
     const dec = C.cohorts.indexOf('2010-12');
     insights('insights-cohorts', [
       ['One in five come back the next month', fmt.pct(rv(1), 0) + ' of new customers order again in the month after their first order, and ' +
-        fmt.pct(Math.min(...early), 0).replace('%', '') + '–' + fmt.pct(Math.max(...early), 0) + ' are active in each of months 1–7.'],
+        fmt.pct(Math.min(...early), 0).replace('%', '') + ' to ' + fmt.pct(Math.max(...early), 0) + ' are active in each of months 1 to 7.'],
       ['They return for the same season', 'Activity sags to ' + fmt.pct(dip, 1) + ' by month ' + late[late.map(rv).indexOf(dip)] +
         ' and rebounds to ' + fmt.pct(rv(12), 1) + ' at month 12, when the season that brought them in comes round again.'],
       ['First-year value is ' + times(vv(11) / vv(0)) + ' the first month', 'A new customer brings ' + fmt.gbp(vv(0)) +
         ' in the month they are acquired and ' + fmt.gbp(vv(11)) + ' over their first twelve months.'],
-      ['Christmas shoppers churn', dec >= 0 ? 'Only ' + fmt.pct(C.retention[dec][1], 0) + " of December 2010's new customers ordered in January, against " +
+      ['Christmas shoppers churn', dec >= 0 ? 'Only ' + fmt.pct(C.retention[dec][1], 0) + " of December 2010’s new customers ordered in January, against " +
         fmt.pct(rv(1), 0) + ' for the average cohort.' : ''],
     ]);
   }
@@ -452,7 +490,7 @@
           type: 'bar', orientation: 'h', name, y: segs.map((s) => s.segment), x: segs.map((s) => s[key]),
           marker: { color, cornerradius: 4 },
           customdata: segs.map((s) => [fmt.int(s.customers), fmt.gbp(s.revenue)]),
-          hovertemplate: '<b>%{y}</b><br>' + name + ': %{x:.1%}<br>%{customdata[0]} customers · %{customdata[1]}<extra></extra>',
+          hovertemplate: '<b>%{y}</b><br>' + name + ': %{x:.1%}<br>%{customdata[0]} customers, %{customdata[1]}<extra></extra>',
         });
         return {
           data: [bar('customer_share', 'Share of customers', t.series[0]), bar('revenue_share', 'Share of revenue', t.series[1])],
@@ -471,7 +509,23 @@
     const FS = [1, 2, 3, 4, 5];
     const cell = (r, f) => R.grid.find((g) => g.r_score === r && g.f_score === f);
     const yLabels = RS.map((r) => 'R' + r);
-    const wrapName = (s) => (s.length > 12 ? s.replace(' ', '<br>') : s);
+    /* On a phone a cell is under 50px wide: names break at each word, and the four longest words at a syllable. */
+    const BREAKS = { Hibernating: 'Hiber-|nating', Champions: 'Cham-|pions', customers: 'cus-|tomers', Promising: 'Prom-|ising' };
+    const measure = document.createElement('canvas').getContext('2d');
+    const wrapName = (s, t) => {
+      if (!t.narrow) return s.length > 12 ? s.replace(' ', '<br>') : s;
+      measure.font = '11px ' + t.font;
+      const room = (t.width - 54) / 5 - 5;
+      const fits = (x) => measure.measureText(x).width <= room;
+      const words = [].concat(...s.split(' ').map((w) => (fits(w) || !BREAKS[w] ? [w] : BREAKS[w].split('|'))));
+      const lines = [];
+      words.forEach((w) => {
+        const last = lines[lines.length - 1];
+        if (last && !last.endsWith('-') && fits(last + ' ' + w)) lines[lines.length - 1] = last + ' ' + w;
+        else lines.push(w);
+      });
+      return lines.join('<br>');
+    };
     Viz.card('card-rfgrid', {
       build: (t) => {
         const z = RS.map((r) => FS.map((f) => cell(r, f).customers));
@@ -479,18 +533,19 @@
         const annotations = [];
         RS.forEach((r, i) => FS.forEach((f, j) => {
           const c = cell(r, f);
-          annotations.push({ x: R.f_labels[j], y: yLabels[i], showarrow: false, text: wrapName(c.segment) + '<br>' + fmt.int(c.customers),
+          annotations.push({ x: R.f_labels[j], y: yLabels[i], showarrow: false, text: wrapName(c.segment, t) + '<br>' + fmt.int(c.customers),
             font: { size: 11, color: inkOn(t, c.customers / max) } });
         }));
+        const ticks = t.narrow ? { tickvals: R.f_labels, ticktext: R.f_labels.map((s) => s.replace(/ orders?$/, '')) } : {}; // the axis title says what they count
         return {
           data: [{
             type: 'heatmap', z, x: R.f_labels, y: yLabels, colorscale: t.seqScale, zmin: 0, xgap: 2, ygap: 2, showscale: false,
             customdata: RS.map((r) => FS.map((f) => [cell(r, f).segment, fmt.gbp(cell(r, f).revenue)])),
-            hovertemplate: '<b>%{customdata[0]}</b><br>Recency %{y}, %{x}<br>%{z:,} customers · %{customdata[1]}<extra></extra>',
+            hovertemplate: '<b>%{customdata[0]}</b><br>Recency %{y}, %{x}<br>%{z:,} customers, %{customdata[1]}<extra></extra>',
           }],
           layout: {
-            annotations, margin: { l: 8, r: 8, t: 8, b: 8 },
-            xaxis: { title: { text: 'Orders to date' }, showgrid: false, showline: false },
+            annotations, margin: t.narrow ? { l: 2, r: 2, t: 8, b: 8 } : { l: 8, r: 8, t: 8, b: 8 },
+            xaxis: Object.assign({ title: { text: 'Orders to date' }, showgrid: false, showline: false }, ticks),
             yaxis: { title: { text: 'Recency score (R5 = most recent fifth)' }, autorange: 'reversed', showgrid: false, tickfont: { color: t.text2, size: 12 } },
           },
         };
@@ -506,20 +561,20 @@
       rows: segs.map((s) => [s.segment, fmt.int(s.customers), fmt.pct(s.revenue_share, 1), fmt.int(s.median_recency), fmt.num(s.median_frequency, 0),
         fmt.gbp(s.median_monetary), fmt.pct(s.repurchase_rate, 0), fmt.pct(s.mean_propensity, 0), s.action]),
     });
-    box.querySelectorAll('tbody td:last-child').forEach((td) => { td.classList.add('wrap-cell'); td.style.minWidth = '260px'; });
+    box.querySelectorAll('tbody td:last-child').forEach((td) => td.classList.add('wrap-cell'));
     el('playbook-note').textContent = '* Backtest: segments assigned as of ' + fmt.date(testWindow.cutoff) +
-      ' and checked against orders in the following 90 days. "Predicted now" is the repurchase model\'s average probability of an order in the next 90 days, as of ' +
+      ' and checked against orders in the following 90 days. “Predicted now” is the repurchase model’s average probability of an order in the next 90 days, as of ' +
       fmt.date(D.meta.snapshot) + '.';
 
     const sum = (key, names) => names.reduce((s, n) => s + seg[n][key], 0);
     const best = ['Champions', 'Loyal'];
-    const risk = ['At risk', "Can't lose them"];
+    const risk = ['At risk', "Can’t lose them"];
     insights('insights-rfm', [
       ['A third of customers, four-fifths of revenue', 'Champions and Loyal customers are ' + fmt.pct(sum('customer_share', best), 0) +
         ' of the base and ' + fmt.pct(sum('revenue_share', best), 0) + ' of revenue.'],
       ['The segments predict behaviour', 'Assigned on ' + fmt.date(testWindow.cutoff) + ', ' + fmt.pct(seg.Champions.repurchase_rate, 0) +
         ' of Champions ordered in the next 90 days, against ' + fmt.pct(seg.Lost.repurchase_rate, 0) + ' of Lost customers.'],
-      [fmt.gbpCompact(sum('revenue', risk), 2) + ' of past revenue has gone quiet', fmt.int(sum('customers', risk)) + " At-risk and Can't-lose customers (" +
+      [fmt.gbpCompact(sum('revenue', risk), 2) + ' of past revenue has gone quiet', fmt.int(sum('customers', risk)) + " At-risk and Can’t-lose customers (" +
         fmt.pct(sum('customer_share', risk), 0) + ' of the base) used to order often but have not ordered for about a year: the win-back list.'],
     ]);
   }
@@ -645,7 +700,7 @@
         signed(met[sel].roc_auc - met.rfm.roc_auc, 3) + ', 95% CI ' + signed(bs.roc_auc.low, 3) + ' to ' + signed(bs.roc_auc.high, 3) +
         '), and average precision ' + met[sel].pr_auc.toFixed(3) + ' against ' + met.rfm.pr_auc.toFixed(3) + '. At the very top the two agree.'],
       ['The top decile almost always reorders', fmt.pct(top.observed, 0) + ' of the highest-scored tenth ordered within ' + M.horizon_days + ' days (' +
-        times(top.observed / test.base_rate) + ' the average) and they brought ' + fmt.pct(top.revenue_share, 0) + " of the quarter's revenue."],
+        times(top.observed / test.base_rate) + ' the average) and they brought ' + fmt.pct(top.revenue_share, 0) + " of the quarter’s revenue."],
       ['Breadth of engagement matters most', M.importance[0].label + ' and ' + M.importance[1].label.toLowerCase() + ' carry most of the signal.' +
         (recency && recency.importance < 0.002 ? ' Days since the last order adds almost nothing once recent order counts are known.' : '')],
       ['Rank, then recalibrate', 'The held-out quarter is the Christmas peak: ' + fmt.pct(test.base_rate, 0) + ' ordered against ' +
@@ -703,14 +758,15 @@
       ['Colourways go in pairs', 'Most of the strongest rules pair a product with its twin in another colour or design, such as pink and blue polka-dot cups. ' +
         'Show the other colourway on the product page and in the basket.'],
       ['Room to cross-sell', 'With ' + fmt.int(B.sizes.median_products) + ' products in the median order (mean ' + fmt.num(B.sizes.mean_products, 0) +
-        '), buyers already build large mixed baskets; the rules give each product a ready-made "goes with" list.'],
+        '), buyers already build large mixed baskets; the rules give each product a ready-made “goes with” list.'],
     ]);
   }
 
   async function main() {
     Viz.initTheme(el('theme-toggle'));
+    tabs();
     try {
-      D = await Viz.loadJSON('data/dashboard.json');
+      D = curly(await Viz.loadJSON('data/dashboard.json'));
     } catch (err) {
       el('meta-size').textContent = 'Could not load the data: ' + err.message;
       return;

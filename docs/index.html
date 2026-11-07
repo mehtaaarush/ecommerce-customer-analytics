@@ -1,62 +1,85 @@
 <!doctype html>
-<html lang="en" data-theme-key="ecommerce-theme">
+<html lang="en" data-theme-key="ecommerce-theme" data-theme="light">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>E-commerce Customer Analytics</title>
   <meta name="description" content="Two years of online-retail transactions (1.07 million invoice lines) cleaned in SQL and analysed end to end: trading KPIs, cohort retention, RFM segmentation, a 90-day repurchase model and market-basket rules.">
   <meta name="author" content="Aarush Mehta">
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23048e5c'/%3E%3Cpath d='M9 12h14l-1.5 12h-11z' stroke='white' stroke-width='2.4' fill='none' stroke-linejoin='round'/%3E%3Cpath d='M12.5 12v-1.5a3.5 3.5 0 0 1 7 0V12' stroke='white' stroke-width='2.4' fill='none'/%3E%3C/svg%3E">
-  <meta name="theme-color" content="#0c4d36">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23f0ebe7'/%3E%3Cpath d='M9 12h14l-1.5 12h-11z' stroke='%231d1614' stroke-width='2.4' fill='%23fdfbf8' stroke-linejoin='round'/%3E%3Cpath d='M12.5 12v-1.5a3.5 3.5 0 0 1 7 0V12' stroke='%23bb3d31' stroke-width='2.4' fill='none'/%3E%3C/svg%3E">
+  <meta name="theme-color" content="#f0ebe7">
   <script>try{var r=document.documentElement,s=localStorage.getItem(r.dataset.themeKey);if(s==='light'||s==='dark')r.setAttribute('data-theme',s)}catch(e){}</script>
+  <link rel="preconnect" href="https://api.fontshare.com" crossorigin>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
+  <link rel="stylesheet" href="https://api.fontshare.com/v2/css?f[]=general-sans@400,500,600&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400&display=swap">
   <link rel="stylesheet" href="assets/theme.css">
   <script src="https://cdn.jsdelivr.net/npm/plotly.js-cartesian-dist-min@2.35.2/plotly-cartesian.min.js" defer></script>
   <script src="assets/viz.js" defer></script>
   <script src="assets/app.js" defer></script>
 </head>
 <body>
-<div class="masthead">
-<header class="site-header wrap">
-  <div class="top">
-    <div>
-      <p class="eyebrow">Data analytics portfolio · E-commerce and customer analytics</p>
+<a class="skip" href="#main">Skip to the analysis</a>
+
+<header class="topbar">
+  <div class="container topbar-inner">
+    <span class="wordmark">Customer analytics</span>
+    <button class="mode-toggle" id="theme-toggle" type="button">Dark mode</button>
+  </div>
+</header>
+
+<nav class="tabs" aria-label="Sections">
+  <div class="container">
+    <ul>
+      <li><a href="#s-quality">Cleaning</a></li>
+      <li><a href="#s-trading">Trading</a></li>
+      <li><a href="#s-mix">Revenue mix</a></li>
+      <li><a href="#s-cohorts">Cohorts</a></li>
+      <li><a href="#s-rfm">Segments</a></li>
+      <li><a href="#s-model">Repurchase model</a></li>
+      <li><a href="#s-basket">Baskets</a></li>
+      <li><a href="#methods">Methods</a></li>
+    </ul>
+  </div>
+</nav>
+
+<main id="main" class="container">
+  <div class="overview">
+    <div class="intro">
       <h1>Who buys, who comes back, and what sells together</h1>
       <p class="subtitle">Two years of transactions from a UK online gift wholesaler, cleaned in SQL and analysed end to end: trading performance,
         cohort retention, RFM segmentation, a model that predicts who will order in the next 90 days, and market-basket rules.</p>
+      <ul class="byline">
+        <li class="person">By Aarush Mehta</li>
+        <li>E-commerce and customer analytics</li>
+        <li><span id="meta-size">Loading data…</span></li>
+        <li><a href="https://github.com/mehtaaarush/ecommerce-customer-analytics">Code on GitHub</a></li>
+        <li><a href="#methods">Methods</a></li>
+      </ul>
     </div>
-    <button class="theme-toggle" id="theme-toggle" type="button">Dark mode</button>
-  </div>
-  <div class="meta">
-    <span>By Aarush Mehta</span>
-    <span id="meta-size">Loading data…</span>
-    <a href="https://github.com/mehtaaarush/ecommerce-customer-analytics">Code on GitHub</a>
-    <a href="#methods">Methods</a>
-  </div>
-</header>
-</div>
 
-<main class="wrap">
-  <div class="hero">
-    <div class="hero-figure">
-      <div class="label">Net revenue, December 2010 – November 2011</div>
-      <div class="value" id="hero-value">–</div>
-      <p class="caption" id="hero-caption"></p>
-    </div>
-    <div class="kpis">
-      <div class="tile" id="kpi-orders"></div>
-      <div class="tile" id="kpi-aov"></div>
-      <div class="tile" id="kpi-customers"></div>
-      <div class="tile" id="kpi-repeat"></div>
-    </div>
+    <section class="statement" aria-label="Headline results">
+      <div class="hero-figure">
+        <div class="label">Net revenue, December 2010 to November 2011</div>
+        <div class="value" id="hero-value"></div>
+        <p class="caption" id="hero-caption"></p>
+      </div>
+      <div class="lines">
+        <div class="tile" id="kpi-orders"></div>
+        <div class="tile" id="kpi-aov"></div>
+        <div class="tile" id="kpi-customers"></div>
+        <div class="tile" id="kpi-repeat"></div>
+      </div>
+    </section>
   </div>
 
-  <section aria-labelledby="s-quality">
-    <h2 id="s-quality">From raw invoice lines to clean sales</h2>
-    <p class="lede" id="quality-lede">Every raw line is classified exactly once in SQL (DuckDB), so the counts below add up to the raw file. Revenue
-      throughout is net merchandise revenue: product sales minus cancellations, with postage, fees and accounting adjustments left out.</p>
+  <section class="section" aria-labelledby="s-quality">
+    <div class="section-head">
+      <h2 id="s-quality">From raw invoice lines to clean sales</h2>
+      <p class="lede" id="quality-lede">Every raw line is classified exactly once in SQL (DuckDB), so the counts below add up to the raw file. Revenue
+        throughout is net merchandise revenue: product sales minus cancellations, with postage, fees and accounting adjustments left out.</p>
+    </div>
     <div class="card" id="card-funnel">
       <div class="card-head">
         <div><h3>What happened to each line</h3><p>Lines per cleaning outcome (log scale: product sales outnumber the smallest group 100,000 to 1)</p></div>
@@ -68,26 +91,28 @@
     <div class="insights" id="insights-quality"></div>
   </section>
 
-  <section aria-labelledby="s-trading">
-    <h2 id="s-trading">How the business trades</h2>
-    <p class="lede">Two comparable twelve-month years, December to November. December 2011 is left out of the comparison because the data stop on
-      the 9th.</p>
-    <div class="controls">
-      <div class="control">
-        <span id="trend-label">Measure</span>
-        <div class="segmented" id="trend-control" role="group" aria-labelledby="trend-label">
-          <button type="button" data-measure="net_revenue" aria-pressed="true">Net revenue</button>
-          <button type="button" data-measure="orders" aria-pressed="false">Orders</button>
-          <button type="button" data-measure="aov" aria-pressed="false">Average order value</button>
-          <button type="button" data-measure="customers" aria-pressed="false">Active customers</button>
-        </div>
-      </div>
+  <section class="section" aria-labelledby="s-trading">
+    <div class="section-head">
+      <h2 id="s-trading">How the business trades</h2>
+      <p class="lede">Two comparable twelve-month years, December to November. December 2011 is left out of the comparison because the data stop on
+        the 9th.</p>
     </div>
     <div class="grid two">
       <div class="card" id="card-monthly">
         <div class="card-head">
-          <div><h3 id="monthly-title">Net revenue by month</h3><p>Year 2 (Dec 2010 – Nov 2011) against year 1 (Dec 2009 – Nov 2010)</p></div>
+          <div><h3 id="monthly-title">Net revenue by month</h3><p>Year 2 (Dec 2010 to Nov 2011) against year 1 (Dec 2009 to Nov 2010)</p></div>
           <button class="view-toggle" type="button" aria-pressed="false">Table</button>
+        </div>
+        <div class="controls">
+          <div class="control">
+            <span id="trend-label">Measure</span>
+            <div class="segmented" id="trend-control" role="group" aria-labelledby="trend-label">
+              <button type="button" data-measure="net_revenue" aria-pressed="true">Net revenue</button>
+              <button type="button" data-measure="orders" aria-pressed="false">Orders</button>
+              <button type="button" data-measure="aov" aria-pressed="false">Average order value</button>
+              <button type="button" data-measure="customers" aria-pressed="false">Active customers</button>
+            </div>
+          </div>
         </div>
         <div class="chart" id="chart-monthly" role="img" aria-label="Line chart of the selected measure by month for two years"></div>
         <div class="table-view"></div>
@@ -105,14 +130,16 @@
     <div class="insights" id="insights-trading"></div>
   </section>
 
-  <section aria-labelledby="s-mix">
-    <h2 id="s-mix">Where the revenue comes from</h2>
-    <p class="lede">By customer type, by country and by product. A "new" customer is one whose first order in the data falls in that month;
-      orders without a customer ID are guest checkouts.</p>
+  <section class="section" aria-labelledby="s-mix">
+    <div class="section-head">
+      <h2 id="s-mix">Where the revenue comes from</h2>
+      <p class="lede">By customer type, by country and by product. A “new” customer is one whose first order in the data falls in that month;
+        orders without a customer ID are guest checkouts.</p>
+    </div>
     <div class="grid two">
       <div class="card" id="card-mix">
         <div class="card-head">
-          <div><h3>Revenue by customer type, year 2</h3><p>Monthly net revenue, December 2010 – November 2011</p></div>
+          <div><h3>Revenue by customer type, year 2</h3><p>Monthly net revenue, December 2010 to November 2011</p></div>
           <button class="view-toggle" type="button" aria-pressed="false">Table</button>
         </div>
         <div class="chart" id="chart-mix" role="img" aria-label="Stacked bar chart of monthly revenue from returning, new and guest customers"></div>
@@ -147,29 +174,31 @@
     <div class="insights" id="insights-mix"></div>
   </section>
 
-  <section aria-labelledby="s-cohorts">
-    <h2 id="s-cohorts">Do new customers come back?</h2>
-    <p class="lede">Customers are grouped by the month of their first order. Each row follows one cohort: the share who ordered again in each later
-      month, or the revenue they had brought in so far. The December 2009 cohort is left out because it mixes new customers with everyone already
-      buying when the data begin.</p>
-    <div class="controls">
-      <div class="control">
-        <span id="cohort-label">Show</span>
-        <div class="segmented" id="cohort-control" role="group" aria-labelledby="cohort-label">
-          <button type="button" data-view="retention" aria-pressed="true">Share ordering again</button>
-          <button type="button" data-view="value" aria-pressed="false">Revenue per customer to date</button>
-        </div>
-      </div>
+  <section class="section" aria-labelledby="s-cohorts">
+    <div class="section-head">
+      <h2 id="s-cohorts">Do new customers come back?</h2>
+      <p class="lede">Customers are grouped by the month of their first order. Each row follows one cohort: the share who ordered again in each later
+        month, or the revenue they had brought in so far. The December 2009 cohort is left out because it mixes new customers with everyone already
+        buying when the data begin.</p>
     </div>
     <div class="card" id="card-cohorts">
       <div class="card-head">
-        <div><h3 id="cohort-title">Cohort retention</h3><p id="cohort-sub">Share of each month's new customers who ordered in each later month</p></div>
+        <div><h3 id="cohort-title">Cohort retention</h3><p id="cohort-sub">Share of each month’s new customers who ordered in each later month</p></div>
         <button class="view-toggle" type="button" aria-pressed="false">Table</button>
+      </div>
+      <div class="controls">
+        <div class="control">
+          <span id="cohort-label">Show</span>
+          <div class="segmented" id="cohort-control" role="group" aria-labelledby="cohort-label">
+            <button type="button" data-view="retention" aria-pressed="true">Share ordering again</button>
+            <button type="button" data-view="value" aria-pressed="false">Revenue per customer to date</button>
+          </div>
+        </div>
       </div>
       <div class="chart xtall" id="chart-cohorts" role="img" aria-label="Heatmap of cohorts by months since first order"></div>
       <div class="table-view"></div>
     </div>
-    <div class="grid two" style="margin-top:16px">
+    <div class="grid two stacked">
       <div class="card" id="card-retention">
         <div class="card-head">
           <div><h3>Average retention curve</h3><p>Share of new customers ordering in month N, weighted by cohort size</p></div>
@@ -190,10 +219,12 @@
     <div class="insights" id="insights-cohorts"></div>
   </section>
 
-  <section aria-labelledby="s-rfm">
-    <h2 id="s-rfm">Who the customers are: RFM segments</h2>
-    <p class="lede" id="rfm-lede">Every customer with an order is scored on recency (days since the last order), frequency (number of orders) and
-      monetary value (net spend), then mapped to a segment by their recency and frequency scores.</p>
+  <section class="section" aria-labelledby="s-rfm">
+    <div class="section-head">
+      <h2 id="s-rfm">Who the customers are: RFM segments</h2>
+      <p class="lede" id="rfm-lede">Every customer with an order is scored on recency (days since the last order), frequency (number of orders) and
+        monetary value (net spend), then mapped to a segment by their recency and frequency scores.</p>
+    </div>
     <div class="grid two">
       <div class="card" id="card-segments">
         <div class="card-head">
@@ -212,19 +243,21 @@
         <div class="table-view"></div>
       </div>
     </div>
-    <div class="card" style="margin-top:16px">
+    <div class="card stacked">
       <div class="card-head"><div><h3>Segment playbook</h3><p id="playbook-sub">Profile, observed follow-through and recommended action per segment</p></div></div>
-      <div class="table-view" id="segment-table" style="display:block;max-height:none;border-top:0"></div>
+      <div class="table-view table-static" id="segment-table"></div>
       <p class="footnote" id="playbook-note"></p>
     </div>
     <div class="insights" id="insights-rfm"></div>
   </section>
 
-  <section aria-labelledby="s-model">
-    <h2 id="s-model">Who will order in the next 90 days?</h2>
-    <p class="lede" id="model-lede"></p>
+  <section class="section" aria-labelledby="s-model">
+    <div class="section-head">
+      <h2 id="s-model">Who will order in the next 90 days?</h2>
+      <p class="lede" id="model-lede"></p>
+    </div>
     <div class="controls">
-      <label class="control" style="flex:1;min-width:220px">Share of customers contacted <output id="out-share"></output>
+      <label class="control control-grow"><span>Share of customers contacted <output id="out-share"></output></span>
         <input type="range" id="model-share" min="5" max="100" step="5" value="20">
       </label>
       <div class="control">
@@ -265,21 +298,18 @@
         <div class="table-view"></div>
       </div>
     </div>
-    <div class="card" style="margin-top:16px">
+    <div class="card stacked">
       <div class="card-head"><div><h3>Model comparison</h3><p>Chosen on the validation quarter, then scored once on the held-out quarter</p></div></div>
-      <div class="table-view" id="model-table" style="display:block;max-height:none;border-top:0"></div>
+      <div class="table-view table-static" id="model-table"></div>
       <p class="footnote" id="model-note"></p>
     </div>
     <div class="insights" id="insights-model"></div>
   </section>
 
-  <section aria-labelledby="s-basket">
-    <h2 id="s-basket">What sells together?</h2>
-    <p class="lede" id="basket-lede"></p>
-    <div class="controls">
-      <label class="control" style="min-width:320px">Product
-        <select id="basket-item"></select>
-      </label>
+  <section class="section" aria-labelledby="s-basket">
+    <div class="section-head">
+      <h2 id="s-basket">What sells together?</h2>
+      <p class="lede" id="basket-lede"></p>
     </div>
     <div class="grid two">
       <div class="card" id="card-basket">
@@ -287,32 +317,39 @@
           <div><h3 id="basket-title">Frequently bought together</h3><p>Products most over-represented in orders containing this one (lift)</p></div>
           <button class="view-toggle" type="button" aria-pressed="false">Table</button>
         </div>
+        <div class="controls">
+          <label class="control control-wide">Product
+            <select id="basket-item"></select>
+          </label>
+        </div>
         <div class="chart" id="chart-basket" role="img" aria-label="Bar chart of the products most often bought with the selected product"></div>
         <div class="table-view"></div>
         <p class="footnote" id="basket-note"></p>
       </div>
       <div class="card">
         <div class="card-head"><div><h3>Strongest pairs overall</h3><p>Pairs found in at least 1% of orders, by lift</p></div></div>
-        <div class="table-view" id="pairs-table" style="display:block;max-height:none;border-top:0"></div>
+        <div class="table-view table-static" id="pairs-table"></div>
       </div>
     </div>
     <div class="insights" id="insights-basket"></div>
   </section>
 
-  <section aria-labelledby="methods">
-    <h2 id="methods">Methods</h2>
+  <section class="section" aria-labelledby="methods">
+    <div class="section-head">
+      <h2 id="methods">Methods</h2>
+    </div>
     <div class="methods">
       <p><strong>Data.</strong> UCI Online Retail II: every invoice line of a UK-based, mostly wholesale online gift retailer from 1 December 2009
         to 9 December 2011 (two Excel sheets, 1,067,371 lines). The pipeline downloads the archive, checks its SHA-256 hash and caches it as Parquet.</p>
       <p><strong>Cleaning (SQL).</strong> Each line gets one status, checked in order: exact duplicate; non-merchandise code (postage, carriage,
         fees, manual adjustments, discounts, samples, tests, vouchers); cancellation (invoice starting with C); zero price or non-positive quantity
-        (write-offs); price keying error (unit price over 100× the product's median); otherwise a sale.</p>
+        (write-offs); price keying error (unit price over 100× the product’s median); otherwise a sale.</p>
       <p><strong>Definitions.</strong> Net revenue = sales minus cancellations. An order is a sale invoice; active customers are distinct
-        customer IDs with a sale; the repeat-customer rate is the share of a year's customers with two or more orders. Guest lines (no customer
+        customer IDs with a sale; the repeat-customer rate is the share of a year’s customers with two or more orders. Guest lines (no customer
         ID) count toward revenue and orders but not customer metrics.</p>
       <p><strong>Cohorts.</strong> Monthly acquisition cohorts from the first sale in the data, followed through November 2011 (the last full
         month). Averages are weighted by cohort size and use only cohorts old enough to have reached that month.</p>
-      <p><strong>RFM.</strong> Recency and monetary scores are quintiles; frequency uses fixed bands (1, 2, 3–4, 5–9, 10+ orders) because a
+      <p><strong>RFM.</strong> Recency and monetary scores are quintiles; frequency uses fixed bands (1, 2, 3 to 4, 5 to 9 and 10+ orders) because a
         quarter of customers ordered once. Segments come from an 11-segment map of the recency × frequency grid. To check the segments mean
         something, they were also assigned as of 11 September 2011 and compared with who ordered in the following 90 days.</p>
       <p><strong>Repurchase model.</strong> One row per customer and cutoff: 15 features from history before the cutoff, label = any order in the
@@ -321,16 +358,19 @@
       <p><strong>Market basket.</strong> Product pairs among the 400 most-ordered products that appear together in at least 60 orders. Support =
         share of orders with both, confidence = P(B | A), lift = confidence ÷ P(B).</p>
       <p><strong>Limitations.</strong> One retailer and two years, so the seasonal pattern rests on two Christmases. Customer IDs are missing on a
-        fifth of lines. The held-out quarter is the Christmas peak, so the model's probabilities run low there even though its ranking holds;
+        fifth of lines. The held-out quarter is the Christmas peak, so the model’s probabilities run low there even though its ranking holds;
         recalibrate on the latest quarter before reading them as forecasts.</p>
     </div>
   </section>
 </main>
 
 <footer class="site-footer">
-  <div class="wrap">
-    Data: Chen, D. (2012). <a href="https://doi.org/10.24432/C5CG6D">Online Retail II</a>, UCI Machine Learning Repository (CC BY 4.0) ·
-    Built by Aarush Mehta · <a href="https://github.com/mehtaaarush/ecommerce-customer-analytics">Source code</a> (MIT)
+  <div class="container">
+    <dl class="credits">
+      <div><dt>Data</dt><dd>Chen, D. (2012). <a href="https://doi.org/10.24432/C5CG6D">Online Retail II</a>, UCI Machine Learning Repository (CC BY 4.0)</dd></div>
+      <div><dt>Built by</dt><dd>Aarush Mehta, data analytics portfolio</dd></div>
+      <div><dt>Licence</dt><dd><a href="https://github.com/mehtaaarush/ecommerce-customer-analytics">Source code</a> under MIT</dd></div>
+    </dl>
   </div>
 </footer>
 </body>
